@@ -1,1 +1,1 @@
-# STAT684_Consulting_sc2
+The second project for single cell data analysis.
