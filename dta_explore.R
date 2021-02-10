@@ -13,6 +13,9 @@ dta_seurat <- FindVariableFeatures(dta_seurat, selection.method = "vst", nfeatur
 head(VariableFeatures(dta_seurat), 10)
 all.genes <- rownames(dta_seurat)
 dta_seurat <- ScaleData(dta_seurat, features = all.genes)
+## dimension reduction
+dta_seurat <- RunPCA(dta_seurat, features = VariableFeatures(object = dta_seurat), verbose = FALSE)
+DimPlot(dta_seurat, reduction = "pca")
 ## Do cluster
 dta_seurat <- FindNeighbors(dta_seurat, dims = 1:10)
 dta_seurat <- FindClusters(dta_seurat, resolution = 0.5)
