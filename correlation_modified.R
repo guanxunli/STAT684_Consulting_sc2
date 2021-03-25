@@ -1,4 +1,5 @@
 library(Matrix)
+library(zinbwave)
 
 ## load data
 dta <- as.matrix(readRDS("data set/dta.rds"))
@@ -19,24 +20,58 @@ spearman_mat <- matrix(NA, nrow = n, ncol = n)
 cor_01 <- matrix(NA, nrow = n, ncol = n)
 cor_common <- matrix(NA, nrow = n, ncol = n)
 
+## Train ZINB model
+set.seed(1)
+dta_zinb <- zinbFit(dta, K = 2, stop.epsilon.optimize = 1e-07, verbose = TRUE, 
+                    maxiter.optimize = 25, commondispersion = FALSE)
+res$dta_zinb <- dta_zinb
+saveRDS(res, "results/res_correlation_modified.rds")
+
+## calculate adjusted probability
+mu <- exp(t(dta_zinb@X %*% dta_zinb@beta_mu + t(dta_zinb@V %*% dta_zinb@gamma_mu) + 
+              dta_zinb@W %*% dta_zinb@alpha_mu + dta_zinb@O_mu))
+pi_zinb <- t(dta_zinb@X %*% dta_zinb@beta_pi + t(dta_zinb@V %*% dta_zinb@gamma_pi) + 
+               dta_zinb@W %*% dta_zinb@alpha_pi + dta_zinb@O_pi)
+pi_zinb <- exp(pi_zinb) / (1 + exp(pi_zinb))
+theta <- exp(matrix(dta_zinb@zeta, nrow = n, ncol = p, byrow = TRUE))
+pi0 <- exp(theta * (log(theta) - log(theta + mu)))
+pi_adj <- pi_zinb / (pi_zinb + pi0)
+
 ## begin calculation
 for (i in seq_len(n)) {
   for (j in i:n) {
+    ## both 1
     index11 <- intersect(index1[[i]], index1[[j]])
-    p11 <- length(intersect(index1[[i]],  index1[[j]])) / p
-    p00 <- length(intersect(index0[[i]], index0[[j]])) / p
-    p10 <- length(intersect(index1[[i]], index0[[j]])) / p
-    p01 <- length(intersect(index0[[i]], index1[[j]])) / p
-    px1 <- length(index1[[i]]) / p
-    py1 <- length(index1[[j]]) / p
+    n11 <- length(index11)
+    ## consider modified 0
+    index00 <- intersect(index0[[i]],  index0[[j]])
+    tmp1 <- pi_zinb[i, index00]
+    tmp2 <- pi_zinb[j, index00]
+    n00 <- sum((1 - tmp1) * (1 - tmp2))
+    ## consider only one 0
+    index10 <- intersect(index1[[i]],  index0[[j]])
+    tmp1 <- pi_zinb[j, index10]
+    n10 <- sum(1 - tmp1)
+    index01 <- intersect(index0[[i]],  index1[[j]])
+    tmp2 <- pi_zinb[i, index01]
+    n01 <- sum(1 - tmp2)
+    ## joint probability
+    n_new <- n11 + n00 + n10 + n01
+    p11 <- n11 / n_new
+    p10 <- n10 / n_new
+    p01 <- n01 / n_new
+    p00 <- n00 / n_new
+    ## marginal probability
+    px1 <- (n11 + n10) / n_new
+    py1 <- (n01 + n11) / n_new
     if (length(index11) == 0) {
       rho <- 0
-    } else {
+    } else{
       x <- as.numeric(dta[i, index11])
       y <- as.numeric(dta[j, index11])
       if (identical(x, y)) {
         rho <- 1
-      } else {
+      } else{
         rho <- suppressWarnings(cor(x, y, method = "spearman"))
         if (is.na(rho)) {
           rho <- 0
@@ -64,6 +99,8 @@ rownames(spearman_01) <- colnames(spearman_mat) <- gene_name
 res$cor_01 <- cor_01
 res$cor_common <- cor_common
 res$spearman_mat <- spearman_mat
+saveRDS(res, "results/res_correlation_modified.rds")
+print("Finish correlation.")
 
 ## calculate the difference pair with adjusted spearman
 index <- which(abs(cor_01 - spearman_01) > 0)
@@ -74,6 +111,7 @@ pair_mat <- matrix(NA, nrow = 2, ncol = length(index))
 pair_mat[1, ] <- index %/% n + 1
 pair_mat[2, ] <- index %% n
 pair_mat[2, ][which(pair_mat[2, ] == 0)] <- n
+res$pair_mat <- pair_mat
 
 gene_pair <- matrix(NA, nrow = length(index) / 2, ncol = 2)
 iter <- 1
@@ -133,6 +171,6 @@ for (i in seq_len(length(pair_p))) {
     pair_p[i] <- 1
   }
 }
-
 res$pair_p_common <- pair_p
-saveRDS(res, "results/res_correlation.rds")
+
+saveRDS(res, "results/res_correlation_modified.rds")
