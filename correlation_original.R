@@ -64,6 +64,7 @@ rownames(spearman_01) <- colnames(spearman_mat) <- gene_name
 res$cor_01 <- cor_01
 res$cor_common <- cor_common
 res$spearman_mat <- spearman_mat
+saveRDS(res, "results/res_correlation_original.rds")
 
 ## calculate the difference pair with adjusted spearman
 index <- which(abs(cor_01 - spearman_01) > 0)
@@ -90,7 +91,7 @@ pair_p <- rep(NA, nrow(gene_pair))
 for (i in seq_len(length(pair_p))) {
   tmp <- table(dta_01[gene_pair[i, 1], ], dta_01[gene_pair[i, 2], ])
   if (identical(as.numeric(dim(tmp)), c(2,2))) {
-    pair_p[i] <- fisher.test(dta_01[res$gene_pair[i, 1], ], dta_01[res$gene_pair[i, 2], ])$p.value
+    pair_p[i] <- fisher.test(dta_01[gene_pair[i, 1], ], dta_01[gene_pair[i, 2], ])$p.value
   } else{
     pair_p[i] <- 1
   }
@@ -127,12 +128,13 @@ dta_01[which(dta > 0)] <- 1
 rownames(dta_01) <- rownames(dta)
 for (i in seq_len(length(pair_p))) {
   tmp <- table(dta_01[gene_pair[i, 1], ], dta_01[gene_pair[i, 2], ])
-  if (identical(as.numeric(dim(tmp)), c(2,2))) {
-    pair_p[i] <- fisher.test(dta_01[res$gene_pair[i, 1], ], dta_01[res$gene_pair[i, 2], ])$p.value
+  if (identical(as.numeric(dim(tmp)), c(2, 2))) {
+    pair_p[i] <- fisher.test(dta_01[gene_pair[i, 1], ], dta_01[gene_pair[i, 2], ])$p.value
   } else{
     pair_p[i] <- 1
   }
 }
 
 res$pair_p_common <- pair_p
-saveRDS(res, "results/res_correlation.rds")
+saveRDS(res, "results/res_correlation_original.rds")
+# Only #14 can't be found by our method.

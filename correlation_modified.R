@@ -128,7 +128,7 @@ pair_p <- rep(NA, nrow(gene_pair))
 for (i in seq_len(length(pair_p))) {
   tmp <- table(dta_01[gene_pair[i, 1], ], dta_01[gene_pair[i, 2], ])
   if (identical(as.numeric(dim(tmp)), c(2,2))) {
-    pair_p[i] <- fisher.test(dta_01[res$gene_pair[i, 1], ], dta_01[res$gene_pair[i, 2], ])$p.value
+    pair_p[i] <- fisher.test(dta_01[gene_pair[i, 1], ], dta_01[gene_pair[i, 2], ])$p.value
   } else{
     pair_p[i] <- 1
   }
@@ -165,8 +165,8 @@ dta_01[which(dta > 0)] <- 1
 rownames(dta_01) <- rownames(dta)
 for (i in seq_len(length(pair_p))) {
   tmp <- table(dta_01[gene_pair[i, 1], ], dta_01[gene_pair[i, 2], ])
-  if (identical(as.numeric(dim(tmp)), c(2,2))) {
-    pair_p[i] <- fisher.test(dta_01[res$gene_pair[i, 1], ], dta_01[res$gene_pair[i, 2], ])$p.value
+  if (identical(as.numeric(dim(tmp)), c(2, 2))) {
+    pair_p[i] <- fisher.test(dta_01[gene_pair[i, 1], ], dta_01[gene_pair[i, 2], ])$p.value
   } else{
     pair_p[i] <- 1
   }
