@@ -130,3 +130,4 @@ for (i in seq_len(length(pair_p))) {
 }
 res$pair_p <- pair_p
 res$gene_pair[which(pair_p < 0.05), ]
+saveRDS(res, "res_modified.rds")
