@@ -34,7 +34,7 @@ pi_zinb <- t(dta_zinb@X %*% dta_zinb@beta_pi + t(dta_zinb@V %*% dta_zinb@gamma_p
 pi_zinb <- exp(pi_zinb) / (1 + exp(pi_zinb))
 theta <- exp(matrix(dta_zinb@zeta, nrow = n, ncol = p, byrow = TRUE))
 pi0 <- exp(theta * (log(theta) - log(theta + mu)))
-pi_adj <- pi_zinb / (pi_zinb + pi0)
+pi_adj <- pi_zinb / (pi_zinb + pi0 * (1 - pi_zinb))
 
 ## begin calculation
 for (i in seq_len(n)) {
@@ -44,15 +44,15 @@ for (i in seq_len(n)) {
     n11 <- length(index11)
     ## consider modified 0
     index00 <- intersect(index0[[i]],  index0[[j]])
-    tmp1 <- pi_zinb[i, index00]
-    tmp2 <- pi_zinb[j, index00]
+    tmp1 <- pi_adj[i, index00]
+    tmp2 <- pi_adj[j, index00]
     n00 <- sum((1 - tmp1) * (1 - tmp2))
     ## consider only one 0
     index10 <- intersect(index1[[i]],  index0[[j]])
-    tmp1 <- pi_zinb[j, index10]
+    tmp1 <- pi_adj[j, index10]
     n10 <- sum(1 - tmp1)
     index01 <- intersect(index0[[i]],  index1[[j]])
-    tmp2 <- pi_zinb[i, index01]
+    tmp2 <- pi_adj[i, index01]
     n01 <- sum(1 - tmp2)
     ## joint probability
     n_new <- n11 + n00 + n10 + n01
